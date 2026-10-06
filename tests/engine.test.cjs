@@ -48,6 +48,10 @@ function addChecks(app,configs) {
   assert.equal(migrated.storage.get('spell_with_ry_governed_v2'),oldRaw,'Migration must not overwrite the original key.');
   assert.equal(migrated.api.getState().legacySnapshots[0].data.history[0].got,'begining');
   assert.equal(migrated.api.mastery('A7').secure,false,'Legacy secure flag cannot award mastery.');
+  assert.match(baselineApp.api.diagnose({word:'planning',skill:'A7'},'plan'),/Ending omitted/,'Base-only response must not be reduced to a doubling error.');
+  assert.match(baselineApp.api.diagnose({word:'misunderstood',skill:'A10'},'missunderstood'),/Prefix boundary/);
+  assert.match(baselineApp.api.diagnose({word:'choice',skill:'A8'},'choise'),/Soft c/);
+  assert.match(baselineApp.api.diagnose({word:'ordinary',skill:'A16'},'ordanary'),/middle vowel/);
   console.log('PASS exact baseline, typed responses, legacy archive, and completion preserved');
 
   const lessons=baselineApp.context.STAR_LESSONS;

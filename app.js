@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const VERSION = '2026.10.05.2', KEY = 'ry_star_speller_v3', DAY = 86400000;
+  const VERSION = '2026.10.05.3', KEY = 'ry_star_speller_v3', DAY = 86400000;
   const LESSONS = window.STAR_LESSONS, PRIOR = window.RY_PRIOR_EVIDENCE;
   const ALL = LESSONS.flatMap(l => [...l.words, ...l.transfer]);
   const $ = s => document.querySelector(s);
@@ -42,12 +42,17 @@
     $('#app').focus({preventScroll:true});
     if ($('#answer')) $('#answer').focus({preventScroll:true});
   }
-  function skillFor(word, domain = '') {
+  function skillFor(word, domain = '', got = '') {
+    const g=normalized(got).toLowerCase();
+    if(word==='choice' && g==='choise')return 'A8';
+    if(word==='ordinary' && g==='ordanary')return 'A16';
+    if(word==='principal' && g && g!=='principal' && g!=='principle')return 'A17';
+    if(word==='stationary' && g==='stationy')return 'A17';
     const maps = {
       A7:['planning','beginning','preferred'], A11:['safely','happier','studied'],
       A12:['families','countries','heroes',"teacher's"], A13:['their','principal','stationary','affect','complement'],
       A14:['Wednesday','February','Tennessee','because','necessary'], A16:['receive'],
-      A4:['purpose','ordinary'], A5:['choice','avoid'], A8:['exciting'], A1:['kitchen']
+      A4:['purpose','ordinary'], A5:['choice','avoid'], A8:['exciting'], A1:['kitchen'], A10:['misunderstood']
     };
     for (const [code, words] of Object.entries(maps)) if (words.includes(word)) return code;
     if (/Syllable|construction/i.test(domain)) return 'A17';
@@ -61,13 +66,21 @@
   function priorMisses() { return (S.priorEvidence.baseline.answers || []).filter(a => a.correct === false); }
   function priorityCodes() {
     const counts = {};
-    for (const a of priorMisses()) { const c=skillFor(a.word,a.domain); counts[c]=(counts[c]||0)+1; }
+    for (const a of priorMisses()) { const c=skillFor(a.word,a.domain,a.got); counts[c]=(counts[c]||0)+1; }
     return Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
   }
   function diagnose(w, got) {
     const g=normalized(got), lower=g.toLowerCase(), expected=w.word.toLowerCase();
     if (g.toLowerCase()===w.word.toLowerCase() && g!==w.word) return 'Capitalization';
     if (lower.replace(/'/g,'')===expected.replace(/'/g,'')) return 'Possessive or contraction mark';
+    if(expected.startsWith(lower) && expected.length-lower.length>=3)return 'Ending omitted; confirm the whole target and task';
+    if(w.word==='misunderstood' && lower==='missunderstood')return 'Prefix boundary: mis has one s';
+    if(w.word==='choice' && lower==='choise')return 'Soft c in the final ce chunk';
+    if(w.word==='ordinary' && lower==='ordanary')return 'Quiet middle vowel: keep di, not da';
+    if(w.word==='stationary' && lower==='stationy')return 'Omitted ar spelling chunk';
+    if(w.word==='principal' && lower==='priceapal')return 'Multisyllabic spelling: keep prin, ci, and pal';
+    if(w.word==='receive' && lower==='recive')return 'Vowel-team sequence: keep cei';
+    if(w.word==='kitchen' && lower==='kcichin')return 'Consonant and vowel mapping: check tch and en';
     if (w.skill==='A13') return 'Meaning choice or exact word spelling; check the sentence';
     if (w.skill==='A12') return /'/.test(w.word) ? 'Owner versus plural ending' : 'Plural ending or base spelling';
     if (w.skill==='A7' && /([bcdfghjklmnpqrstvwxyz])\1/.test(expected)) {
@@ -77,6 +90,7 @@
     if (['A11','A10','A15'].includes(w.skill)) return 'Base, affix, or root boundary';
     if (expected.length-lower.length>=2) return 'Possible omitted spelling chunk';
     if (w.skill==='A8') return 'Hard or soft consonant spelling';
+    if (w.skill==='A4') return 'R-controlled spelling or a quiet vowel in the remaining chunk';
     if (w.skill==='A14') return 'Unexpected letter sequence or exact word memory';
     if (['A16','A17','A6'].includes(w.skill)) return 'Quiet vowel, spelling chunk, or word boundary';
     return 'Vowel or consonant mapping; compare the exact letters';
@@ -195,7 +209,7 @@
   }
   function placementGroups() {
     return priorityCodes().slice(0,5).map(code=>{
-      const l=lesson(code), old=priorMisses().find(a=>skillFor(a.word,a.domain)===code && l.words.some(w=>w.word===a.word));
+      const l=lesson(code), old=priorMisses().find(a=>skillFor(a.word,a.domain,a.got)===code && l.words.some(w=>w.word===a.word));
       const repair=l.words.find(w=>w.word===old?.word)||l.words[0], fresh=unseen(l,1)[0];
       return {code,items:[dictation(repair,'placement',{placementSkill:code}),...(fresh?[dictation(fresh,'placement',{placementSkill:code,unfamiliar:true})]:[])]};
     });
@@ -474,7 +488,7 @@
   }
   function evidenceRows() {
     return (S.priorEvidence.baseline.answers||[]).map(a=>{
-      const code=skillFor(a.word,a.domain),hypothesis=a.correct?'Previously correct; confirm retention.':diagnose({word:a.word,skill:code},a.got||'');
+      const code=skillFor(a.word,a.domain,a.got),hypothesis=a.correct?'Previously correct; confirm retention.':diagnose({word:a.word,skill:code},a.got||'');
       return `<tr><td>${esc(a.word)}</td><td>${esc(a.got??'')}</td><td>${a.correct?'Correct':'Missed'}</td><td>${esc(hypothesis)}<br><span class="muted small">${code} · starting hypothesis</span></td></tr>`;
     }).join('');
   }
