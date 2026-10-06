@@ -74,6 +74,7 @@ function addChecks(app,configs) {
   assert(!app.element('#app').innerHTML.includes(firstWord.word),'Independent-style dictation screen must hide the target.');
   app.click('listen');await app.flush();app.element('#answer').value='planing';app.element('#heard-clear').checked=true;app.submit();
   const first=app.api.getState().firstAttempts.at(-1);assert.equal(first.correct,false);
+  assert.equal(first.independent,true,'Normal pronunciation without hints preserves response independence even in a lesson.');
   app.click('cover-retry');app.element('#correction').value='planning';app.click('retry');
   assert.equal(app.api.getState().firstAttempts.find(a=>a.id===first.id).correct,false,'A correction must never change a first attempt.');
   assert.equal(app.api.getState().corrections.at(-1).correct,true);
@@ -121,6 +122,9 @@ function addChecks(app,configs) {
   const unclear=makeApp();unclear.click('audio');unclear.click('voice-preview');await unclear.flush();unclear.click('voice-approve');unclear.click('mastery',{code:'A7'});unclear.click('unclear');
   assert.equal(unclear.api.getState().firstAttempts.at(-1).correct,null);assert.equal(unclear.api.getState().firstAttempts.at(-1).audioValid,false);assert.equal(unclear.api.getState().reviewQueue.length,0,'An audio issue is not a spelling miss.');
   console.log('PASS unclear audio is excluded without creating a false spelling error');
+
+  const peek=makeApp();peek.click('audio');peek.click('voice-preview');await peek.flush();peek.click('voice-approve');peek.click('mastery',{code:'A7'});peek.click('parent');assert.equal(peek.api.getState().active.assisted,true,'An answer-bearing parent view cannot leave a check independent.');
+  console.log('PASS viewing prior spellings switches an active check to supported practice');
 
   const placement=makeApp();placement.click('audio');placement.click('voice-preview');await placement.flush();placement.click('voice-approve');placement.click('placement');
   assert(placement.api.getState().active.queue.length<=10);

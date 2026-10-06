@@ -8,7 +8,7 @@ This is the spelling app. Learn With Ry, Rayna’s Audio, Ry’s Weekly Word, an
 
 The original 18-lesson Star Speller registry is preserved: A1, A1.5, and A2–A17. The new bank contains 432 contextual word items, including 288 held-out transfer items. Eight teaching words per lesson expand as previously tested transfer words become available for practice. Transfer words stay hidden until an attempt and are checked against the learner’s global exposure history.
 
-Lessons follow Teach → Check → Retrieve → Practice → Apply → Transfer. Independent mastery checks and delayed retrieval are separate evidence stages. Practice includes rule checks, dictated spelling, recognition, select exactly 2, new written sentences, targeted correction, parallel words after a miss, and older-pattern review. Written sentences retain their exact prompts and responses; their meaning needs human review.
+Lessons follow Teach → Check → Retrieve → Practice → Apply → Transfer. Independent mastery checks and delayed retrieval are separate evidence stages. Practice includes rule checks, dictated spelling, recognition, select exactly 2, new written sentences, targeted correction, parallel words after a miss, and older-pattern review. Written sentences retain their exact prompts, prompt IDs, subjects, responses, timestamps, versions, and review statuses. Their meaning and sentence quality await ChatGPT review; the browser checks only target spelling.
 
 ## Prior evidence and placement
 
@@ -28,6 +28,8 @@ A short adaptive placement check prioritizes concepts suggested by the prior mis
 - Score records are verified against their underlying first attempts. Corrections and audio flags are append-only records.
 
 The app can continue teaching while retention evidence is pending.
+
+An unhinted dictated response is recorded as independent even during ordinary lesson retrieval. Only responses belonging to a qualifying independent mastery or retention session can satisfy the mastery gate. Immediate targeted reteaching and corrections remain supported practice. Opening the parent view during an independent check switches that session to supported practice, because prior answer spellings are visible there.
 
 ## Audio quality
 
