@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const VERSION = '2026.10.19.2', KEY = 'ry_star_speller_v3', DAY = 86400000;
+  const VERSION = '2026.10.19.3', KEY = 'ry_star_speller_v3', DAY = 86400000;
   const LESSONS = window.STAR_LESSONS, PRIOR = window.RY_PRIOR_EVIDENCE;
   const ALL = LESSONS.flatMap(l => [...l.words, ...l.transfer]);
   const $ = s => document.querySelector(s);
@@ -141,22 +141,21 @@
   function qualifiedPlacement() { return S.placementChecks.some(c=>c.audioValid && c.independent); }
   function home() {
     const l=lesson(S.current)||lesson('A7'), needPlacement=!qualifiedPlacement();
-    const due=LESSONS.filter(x=>{const m=mastery(x.code);return m.due && m.due<=Date.now();}).length;
+    const due=LESSONS.filter(x=>{const m=mastery(x.code);return m.due&&m.due<=Date.now();}).length;
     const secure=LESSONS.filter(x=>mastery(x.code).secure).length;
-    const practiced=LESSONS.filter(x=>S.completedLessons.includes(x.code)||S.priorCompletion.codes.includes(x.code)).length;
     const priorities=priorityCodes().slice(0,3).map(code=>lesson(code)).filter(Boolean);
-    const journey=[{label:'The Evidence',detail:'Your original spelling baseline',done:!!S.priorEvidence?.baseline?.answers?.length,icon:'01',action:'parent'},
-      {label:'The Initiation',detail:'A clear-voice independent placement check',done:!needPlacement,icon:'02',action:'placement'},
-      {label:'The Spellcraft Trials',detail:'Teach → try → explain → spell',done:practiced>7,icon:'03',action:'learn'},
-      {label:'The Final Test',detail:'Independent checks and brand-new words',done:secure>0,icon:'04',action:'book'},
-      {label:'The Return',detail:'Spaced retention and mixed review',done:secure>0&&!due,icon:'05',action:'review'}];
-    const currentStep=journey.findIndex(s=>!s.done);
-    render(`<section class="star-welcome"><div class="star-welcome-copy"><div class="eyebrow">THE SPELL WITH RY CHRONICLES</div><h1>Welcome back, Ry.<br><em>Your next chapter awaits.</em></h1><p>Explore hidden word patterns, solve spelling mysteries, and unlock challenges built around your own learning history.</p><div class="row"><button class="primary star-go" data-action="${S.active?'resume':needPlacement?'placement':'learn'}" ${!needPlacement&&!S.active?`data-code="${l.code}"`:''}>${S.active?'Continue my chapter':needPlacement?'Begin the initiation':'Enter the next chapter'}</button><button class="quiet" data-action="book">Explore chapters</button></div></div><div class="star-mascot" aria-hidden="true"><span>✦</span><small>THE CHRONICLES</small></div></section>
-    <section class="star-stats" aria-label="Your progress"><div class="star-stat"><strong>${secure}</strong><span>Secure skills</span></div><div class="star-stat"><strong>${practiced}</strong><span>Lessons explored</span></div><div class="star-stat"><strong>${due}</strong><span>Reviews ready</span></div></section>
-    <section class="star-section"><div class="star-section-head"><div><div class="eyebrow">YOUR CHAPTERS</div><h2>Choose your next chapter</h2></div><button data-action="book">All lessons →</button></div><div class="star-path">${journey.map((step,i)=>`<button type="button" data-action="${step.action}" data-code="${l.code}" class="star-step ${step.done?'done':i===currentStep?'now':'upcoming'}"><div class="star-step-icon">${step.icon}</div><div><strong>${i+1}. ${step.label}</strong><small>${step.detail}</small></div><span class="star-step-status">${step.done?'✓ Done':i===currentStep?'ENTER →':'OPEN →'}</span></button>`).join('')}</div></section>
-    <section class="star-section"><div class="star-section-head"><div><div class="eyebrow">YOUR NEXT CHALLENGES</div><h2>Choose your challenge</h2></div></div><div class="star-power-grid"><button class="star-power" data-action="learn" data-code="${l.code}"><span>✧</span><strong>Today's mission</strong><small>${esc(l.title)}</small><b>Let's learn →</b></button><button class="star-power" data-action="review"><span>↗</span><strong>Brain booster</strong><small>Bring back old skills and make them stick.</small><b>Review →</b></button><button class="star-power" data-action="book"><span>◈</span><strong>Spellbook</strong><small>Explore all your spelling worlds.</small><b>Explore →</b></button></div></section>
-    ${priorities.length?`<section class="star-section star-focus"><div class="eyebrow">THE EVIDENCE FILE</div><h2>Skills we're strengthening</h2><p>These are learning priorities from your original spelling responses—not mastery badges.</p><div class="star-focus-list">${priorities.map(x=>`<button data-action="learn" data-code="${x.code}">${esc(x.title)} <span>Practice →</span></button>`).join('')}</div></section>`:''}
-    <p class="star-footer-note">Your previous answers and learning evidence are preserved. Stars are earned only through valid independent mastery checks.</p>`, 'home');
+    const stages=[
+      ['01','ASSESS','Placement','Find your current level','placement',null,!needPlacement],
+      ['02','DECODE','Pattern study','Understand the rule behind the word','learn',l.code,S.completedLessons.includes(l.code)],
+      ['03','APPLY','The challenge','Practice in context and unfamiliar words','book',null,false],
+      ['04','PROVE','Mastery checks','Show what you can do independently','book',null,secure>0],
+      ['05','RETAIN','Long game','Review over time so it stays learned','review',null,secure>0&&!due]
+    ];
+    render(`<section class="editorial-hero"><div class="editorial-kicker"><span class="live-dot"></span> SPELL WITH RY <span class="issue">PERSONAL EDITION / 2026</span></div><div class="editorial-layout"><div><p class="edition">THE WORD LAB <span>—</span> VOL. 01</p><h1>Words have<br><i>secrets.</i><br>Find them.</h1><p class="editorial-description">A personalized spelling challenge. Decode the patterns, make your own connections, and prove what you know.</p><div class="editorial-actions"><button class="editorial-cta" data-action="${S.active?'resume':needPlacement?'placement':'learn'}" ${!S.active&&!needPlacement?`data-code="${l.code}"`:''}>${S.active?'RESUME SESSION':needPlacement?'START PLACEMENT':'CONTINUE LEARNING'} <span>↗</span></button><button class="editorial-link" data-action="book">VIEW ALL LESSONS ↗</button></div></div><div class="editorial-art" aria-hidden="true"><div class="art-ring ring-one"></div><div class="art-ring ring-two"></div><span class="art-type">Aa</span><div class="art-caption">NOT EVERYTHING IS<br>AS IT SEEMS.</div></div></div><div class="editorial-bottom"><span>BUILT AROUND YOUR REAL SPELLING HISTORY</span><span>SCROLL TO EXPLORE ↓</span></div></section>
+    <section class="editorial-overview"><div class="overview-title"><span>01 / YOUR STATUS</span><h2>The dashboard<span class="thin">.</span></h2></div><div class="overview-numbers"><div><strong>${secure.toString().padStart(2,'0')}</strong><span>SECURE SKILLS</span></div><div><strong>${S.priorCompletion.codes.length.toString().padStart(2,'0')}</strong><span>PREVIOUSLY COMPLETED*</span></div><div><strong>${due.toString().padStart(2,'0')}</strong><span>REVIEWS DUE</span></div></div><p class="overview-disclaimer">*Previously completed lessons are not counted as independently mastered.</p></section>
+    <section class="editorial-curriculum"><div class="overview-title"><span>02 / THE PROCESS</span><h2>Your learning path<span class="thin">.</span></h2><p>Work through the sequence. Your original baseline informs the focus; mastery is earned through independent evidence.</p></div><div class="editorial-stage-list">${stages.map(s=>`<button class="editorial-stage" data-action="${s[4]}" ${s[5]?`data-code="${s[5]}"`:''}><span class="stage-no">${s[0]}</span><span class="stage-main"><small>${s[1]}</small><strong>${s[2]}</strong><span>${s[3]}</span></span><span class="stage-state">${s[6]?'COMPLETE':'OPEN'} <b>↗</b></span></button>`).join('')}</div></section>
+    <section class="editorial-focus"><div class="overview-title"><span>03 / PERSONALIZED FOCUS</span><h2>The work ahead<span class="thin">.</span></h2></div><div class="focus-grid"><div class="focus-feature"><span>UP NEXT / ${esc(l.code)}</span><h3>${esc(l.title)}</h3><p>Explore the pattern, practice with feedback, then apply it independently.</p><button data-action="learn" data-code="${l.code}">OPEN LESSON ↗</button></div><div class="focus-aside"><span>FROM YOUR BASELINE</span>${priorities.map((x,i)=>`<button data-action="learn" data-code="${x.code}"><small>0${i+1}</small>${esc(x.title)} <b>↗</b></button>`).join('')}<button data-action="review" class="focus-review">REVIEW OLDER SKILLS ↗</button></div></div></section>
+    <footer class="editorial-footer">SPELL WITH RY <span>LEARN THE PATTERN. OWN THE WORD.</span></footer>`, 'home');
   }
   function book(p=page) {
     page=Math.max(0,Math.min(2,p));
