@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const VERSION = '2026.10.05.3', KEY = 'ry_star_speller_v3', DAY = 86400000;
+  const VERSION = '2026.10.19.1', KEY = 'ry_star_speller_v3', DAY = 86400000;
   const LESSONS = window.STAR_LESSONS, PRIOR = window.RY_PRIOR_EVIDENCE;
   const ALL = LESSONS.flatMap(l => [...l.words, ...l.transfer]);
   const $ = s => document.querySelector(s);
@@ -140,8 +140,23 @@
   }
   function qualifiedPlacement() { return S.placementChecks.some(c=>c.audioValid && c.independent); }
   function home() {
-    const l=lesson(S.current)||lesson('A7'), needPlacement=!qualifiedPlacement(), due=LESSONS.filter(l=>{const m=mastery(l.code);return m.due && m.due<=Date.now();}).length;
-    render(`<section class="hero"><div class="hero-copy"><div class="eyebrow">Welcome back, Ry</div><h1>Make the spelling<br>make sense.</h1><p class="muted">${needPlacement?'A short check will find the best place to begin. Your earlier work is saved.':`${esc(l.title)} is next. Learn the pattern, try it, then use it in a new word.`}</p><div class="row"><button class="primary" data-action="${S.active?'resume':needPlacement?'placement':'learn'}" ${!needPlacement&&!S.active?`data-code="${l.code}"`:''}>${S.active?'Continue where I stopped':needPlacement?'Start a short check':'Start my lesson'}</button>${needPlacement?'<button class="quiet" data-action="learn" data-code="A7">Go to lessons</button>':''}</div><p class="small muted">About 15–20 minutes. One step at a time.</p></div><div class="orb" aria-hidden="true"><span>✧</span></div></section><div class="card compact review-card"><div><div class="eyebrow">Keep it with you</div><h3>${due?`${due} retention ${due===1?'check is':'checks are'} ready`:'A little review goes a long way'}</h3></div><div class="row"><button data-action="review">Review</button><button data-action="book">Open spellbook</button></div></div>`, 'home');
+    const l=lesson(S.current)||lesson('A7'), needPlacement=!qualifiedPlacement();
+    const due=LESSONS.filter(x=>{const m=mastery(x.code);return m.due && m.due<=Date.now();}).length;
+    const secure=LESSONS.filter(x=>mastery(x.code).secure).length;
+    const practiced=LESSONS.filter(x=>S.completedLessons.includes(x.code)||S.priorCompletion.codes.includes(x.code)).length;
+    const priorities=priorityCodes().slice(0,3).map(code=>lesson(code)).filter(Boolean);
+    const journey=[{label:'Discover your powers',detail:'Your original spelling baseline',done:!!S.priorEvidence?.baseline?.answers?.length,icon:'🔎'},
+      {label:'Find your starting point',detail:'A clear-voice independent placement check',done:!needPlacement,icon:'🎯'},
+      {label:'Learn the secret patterns',detail:'Teach → try → explain → spell',done:practiced>7,icon:'🧩'},
+      {label:'Prove your star power',detail:'Independent checks and brand-new words',done:secure>0,icon:'🌟'},
+      {label:'Keep your stars shining',detail:'Spaced retention and mixed review',done:secure>0&&!due,icon:'🏆'}];
+    const currentStep=journey.findIndex(s=>!s.done);
+    render(`<section class="star-welcome"><div class="star-welcome-copy"><div class="eyebrow">✦ YOUR SPELLING ADVENTURE ✦</div><h1>Hey, Ry! <span aria-hidden="true">✨</span><br><em>Ready to shine?</em></h1><p>Every word is a new superpower. Build your skills, beat your personal best, and become a Star Speller!</p><div class="row"><button class="primary star-go" data-action="${S.active?'resume':needPlacement?'placement':'learn'}" ${!needPlacement&&!S.active?`data-code="${l.code}"`:''}>${S.active?'▶ Continue my adventure':needPlacement?'🚀 Find my starting point':'🚀 Start my next mission'}</button><button class="quiet" data-action="book">🗺️ Explore my map</button></div></div><div class="star-mascot" aria-hidden="true"><span>⭐</span><small>YOU'VE GOT THIS!</small></div></section>
+    <section class="star-stats" aria-label="Your progress"><div class="star-stat"><strong>${secure}</strong><span>🌟 Secure skills</span></div><div class="star-stat"><strong>${practiced}</strong><span>📚 Lessons explored</span></div><div class="star-stat"><strong>${due}</strong><span>🔁 Reviews ready</span></div></section>
+    <section class="star-section"><div class="star-section-head"><div><div class="eyebrow">YOUR ADVENTURE MAP</div><h2>Follow your star trail</h2></div><button data-action="book">All lessons →</button></div><div class="star-path">${journey.map((step,i)=>`<div class="star-step ${step.done?'done':i===currentStep?'now':'upcoming'}"><div class="star-step-icon">${step.icon}</div><div><strong>${i+1}. ${step.label}</strong><small>${step.detail}</small></div><span class="star-step-status">${step.done?'✓ Done':i===currentStep?'● NOW':'Next'}</span></div>`).join('')}</div></section>
+    <section class="star-section"><div class="star-section-head"><div><div class="eyebrow">MADE JUST FOR YOU</div><h2>Your next power-ups</h2></div></div><div class="star-power-grid"><button class="star-power" data-action="learn" data-code="${l.code}"><span>🪄</span><strong>Today's mission</strong><small>${esc(l.title)}</small><b>Let's learn →</b></button><button class="star-power" data-action="review"><span>⚡</span><strong>Brain booster</strong><small>Bring back old skills and make them stick.</small><b>Review →</b></button><button class="star-power" data-action="book"><span>📖</span><strong>Spellbook</strong><small>Explore all your spelling worlds.</small><b>Explore →</b></button></div></section>
+    ${priorities.length?`<section class="star-section star-focus"><div class="eyebrow">YOUR BASELINE GIVES US CLUES</div><h2>Skills we're strengthening</h2><p>These are learning priorities from your original spelling responses—not mastery badges.</p><div class="star-focus-list">${priorities.map(x=>`<button data-action="learn" data-code="${x.code}">${esc(x.title)} <span>Practice →</span></button>`).join('')}</div></section>`:''}
+    <p class="star-footer-note">Your previous answers and learning evidence are preserved. Stars are earned only through valid independent mastery checks.</p>`, 'home');
   }
   function book(p=page) {
     page=Math.max(0,Math.min(2,p));
